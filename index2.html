@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tech Spin Wheel</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background: #000; 
+            font-family: 'Arial', sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh; 
+            overflow: hidden; 
+            touch-action: manipulation;
+        }
+        
+        /* 彩色流动背景 */
+        .background {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                45deg,
+                #ff0000,
+                #ff7300,
+                #fffb00,
+                #48ff00,
+                #00ffd5,
+                #002bff,
+                #7a00ff,
+                #ff00c8,
+                #ff0000
+            );
+            background-size: 400% 400%;
+            animation: gradientFlow 15s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 响应式容器 */
+        .container {
+            position: relative;
+            width: 90vw;
+            height: 90vw;
+            max-width: 400px;
+            max-height: 400px;
+            margin: 5vh auto 0;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1);
+            background: #000;
+            border: 3px solid #00ff00;
+            box-shadow: 0 0 20px #00ff0080;
+        }
+
+        .segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            clip-path: polygon(100% 50%, 50% 100%, 0 50%, 50% 0);
+            transform-origin: 100% 100%;
+            background: #001100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #00ff00;
+            font-weight: bold;
+            transform: rotate(30deg);
+        }
+
+        .segment span {
+            transform: rotate(-30deg);
+            text-align: center;
+            font-size: 3vw;
+            padding: 1vw;
+        }
+
+        /* 移动端优化按钮 */
+        button {
+            margin-top: 4vh;
+            padding: 2vh 6vw;
+            background: #00ff00;
+            border: none;
+            border-radius: 25px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px #00ff00;
+            font-size: 4vw;
+            min-width: 40vw;
+            min-height: 8vh;
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* 中奖光效 */
+        .prize-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 200vw;
+            height: 200vh;
+            background: radial-gradient(circle, 
+                rgba(255,215,0,0.3) 0%,
+                rgba(255,215,0,0.2) 30%,
+                rgba(255,215,0,0.1) 50%,
+                transparent 70%
+            );
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            animation: prizeGlow 2s ease-out;
+            z-index: 999;
+            display: none;
+        }
+
+        @keyframes prizeGlow {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #002200;
+            padding: 4vw;
+            border-radius: 3vw;
+            border: 3px solid #00ff00;
+            color: #00ff00;
+            text-align: center;
+            animation: modalIn 0.5s, glow 2s infinite;
+            width: 80vw;
+            max-width: 400px;
+            z-index: 1000;
+        }
+
+        /* 醒目提示样式 */
+        .staff-note {
+            font-size: 16px;
+            color: #ffd700 !important;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0, 34, 0, 0.8);
+            border: 2px solid #ffd700;
+            border-radius: 8px;
+            animation: glowText 1.5s ease-in-out infinite;
+            text-shadow: 0 0 10px #ffd700;
+        }
+
+        @keyframes glowText {
+            0% { opacity: 0.8; box-shadow: 0 0 10px #ffd700; }
+            50% { opacity: 1; box-shadow: 0 0 20px #ffd700; }
+            100% { opacity: 0.8; box-shadow: 0 0 10px #ffd700; }
+        }
+
+        /* 媒体查询 */
+        @media (min-width: 768px) {
+            .container {
+                width: 60vw;
+                height: 60vw;
+            }
+            .segment span {
+                font-size: 1.2rem;
+                padding: 8px;
+            }
+            button {
+                padding: 15px 30px;
+                font-size: 1rem;
+                min-width: auto;
+                min-height: auto;
+            }
+            .modal {
+                width: 60vw;
+                padding: 2rem;
+            }
+            .modal p {
+                font-size: 1.5rem;
+            }
+            .modal h2 {
+                font-size: 2rem;
+            }
+        }
+
+        /* 其他动画 */
+        @keyframes confetti { 
+            0% { transform: translateY(-100%) rotate(0deg); } 
+            100% { transform: translateY(100vh) rotate(360deg); } 
+        }
+        @keyframes modalIn { 
+            from { transform: translate(-50%, -150%); opacity: 0; } 
+            to { transform: translate(-50%, -50%); opacity: 1; } 
+        }
+        @keyframes glow { 
+            0% { box-shadow: 0 0 30px #00ff00; } 
+            50% { box-shadow: 0 0 60px #00ff00; } 
+            100% { box-shadow: 0 0 30px #00ff00; } 
+        }
+    </style>
+</head>
+<body>
+    <div class="background"></div>
+    <div class="prize-glow" id="prizeGlow"></div>
+    <div class="container">
+        <div class="pointer"></div>
+        <div class="wheel" id="wheel"></div>
+    </div>
+    <button id="spinBtn">SPIN NOW</button>
+    <div class="modal" id="resultModal"></div>
+    <div class="photo-reminder" id="photoReminder">
+        Snap a photo with Maker+Tag #IAmAMaker #TCT2025<br>
+        Get an exclusive souvenir!
+    </div>
+
+    <script>
+        const prizes = [
+            {name: "T-Shirt", quota: 200},
+            {name: "Bags", quota: 200},
+            {name: "Creality Pins", quota: 200},
+            {name: "Hats", quota: 50},
+            {name: "Filaments", quota: 25},
+            {name: "$50 Vouchers", quota: 100}
+        ];
+        const segmentAngle = 360 / prizes.length;
+        let isSpinning = false;
+
+        // 触摸事件处理
+        let touchStartX = 0;
+        const spinBtn = document.getElementById('spinBtn');
+        
+        spinBtn.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            e.preventDefault();
+        }, { passive: false });
+
+        spinBtn.addEventListener('touchend', function(e) {
+            const touchEndX = e.changedTouches[0].clientX;
+            if (Math.abs(touchEndX - touchStartX) < 10) {
+                handleSpin();
+            }
+            e.preventDefault();
+        }, { passive: false });
+
+        function handleSpin() {
+            if (isSpinning) return;
+            
+            if ('vibrate' in navigator) {
+                navigator.vibrate(50);
+            }
+            spin();
+        }
+
+        function createWheel() {
+            const wheel = document.getElementById('wheel');
+            prizes.forEach((prize, index) => {
+                const segment = document.createElement('div');
+                segment.className = 'segment';
+                segment.style.transform = `rotate(${index * segmentAngle}deg)`;
+                const span = document.createElement('span');
+                span.textContent = prize.name;
+                segment.appendChild(span);
+                wheel.appendChild(segment);
+            });
+        }
+
+        function createConfetti() {
+            for(let i=0; i<50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+
+        function showResult(prize) {
+            const glow = document.getElementById('prizeGlow');
+            glow.style.display = 'block';
+            setTimeout(() => glow.style.display = 'none', 2000);
+
+            const modal = document.getElementById('resultModal');
+            if (prize === "No prizes left!") {
+                modal.innerHTML = `<div class="modal-icon">😢</div><h2>SORRY!</h2><p>All prizes have been claimed!</p>`;
+            } else {
+                modal.innerHTML = `
+                    <div class="modal-icon">🎉</div>
+                    <h2>CONGRATULATIONS!</h2>
+                    <p>You won:<br><strong style="font-size: 1.8em; color: #ffd700;">${prize}</strong></p>
+                    <div class="modal-buttons">
+                        <button class="modal-confirm-btn" id="confirmBtn">CONFIRM</button>
+                        <button class="modal-confirm-btn" id="closeBtn" style="display: none;">CLOSE</button>
+                    </div>
+                    <p class="staff-note">❗ Please see a staff member immediately to claim your prize ❗</p>
+                `;
+                
+                createConfetti();
+                if ('vibrate' in navigator) {
+                    navigator.vibrate([100, 50, 100]);
+                }
+                
+                const confirmBtn = document.getElementById('confirmBtn');
+                const closeBtn = document.getElementById('closeBtn');
+                
+                confirmBtn.addEventListener('click', () => {
+                    showPhotoReminder();
+                    confirmBtn.style.display = 'none';
+                    closeBtn.style.display = 'block';
+                });
+
+                closeBtn.addEventListener('click', () => {
+                    modal.style.display = 'none';
+                    closeBtn.style.display = 'none';
+                    confirmBtn.style.display = 'block';
+                });
+            }
+            modal.style.display = 'block';
+        }
+
+        function showPhotoReminder() {
+            const reminder = document.getElementById('photoReminder');
+            reminder.style.display = 'block';
+            setTimeout(() => reminder.style.display = 'none', 15000);
+        }
+
+        function spin() {
+            if (isSpinning) return;
+            
+            const availablePrizes = [];
+            prizes.forEach((prize, index) => {
+                if (prize.quota > 0) {
+                    let weight = 5;
+                    if (prize.name === "Filaments") weight = 1;
+                    if (prize.name === "Hats") weight = 3;
+                    availablePrizes.push({ index, weight });
+                }
+            });
+
+            if (availablePrizes.length === 0) {
+                showResult("No prizes left!");
+                return;
+            }
+
+            isSpinning = true;
+            
+            const totalWeight = availablePrizes.reduce((sum, p) => sum + p.weight, 0);
+            const random = Math.random() * totalWeight;
+            let currentSum = 0;
+            let selectedPrize;
+
+            for (const prize of availablePrizes) {
+                currentSum += prize.weight;
+                if (random <= currentSum) {
+                    selectedPrize = prize;
+                    break;
+                }
+            }
+
+            const randomIndex = selectedPrize.index;
+            prizes[randomIndex].quota--;
+
+            const degrees = (360 * 5) + (randomIndex * segmentAngle);
+            document.getElementById('wheel').style.transform = `rotate(${degrees}deg)`;
+
+            setTimeout(() => {
+                showResult(prizes[randomIndex].name);
+                isSpinning = false;
+                startCooldown();
+            }, 5000);
+        }
+
+        function startCooldown() {
+            const btn = document.getElementById('spinBtn');
+            btn.disabled = true;
+            setTimeout(() => btn.disabled = false, 3600000);
+        }
+
+        window.onload = () => {
+            createWheel();
+            document.getElementById('spinBtn').addEventListener('click', handleSpin);
+        };
+    </script>
+</body>
+</html>
